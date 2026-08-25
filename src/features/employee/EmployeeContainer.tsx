@@ -40,20 +40,6 @@ export default function EmployeeContainer() {
   );
   const [viewMode, setViewMode] = useState<"table" | "grid">("table");
   const [deleteOpen, setDeleteOpen] = useState(false);
-  // const [searchTerm, setSearchTerm] = useState(""); // this is for predictive search, not the employee id search
-  const filteredEmployees =
-    employees?.filter((employee) => {
-      // const query = searchTerm.toLowerCase();
-      const query = ""; // this is for predictive search, not the employee id search
-
-      return (
-        employee.name?.toLowerCase().includes(query) ||
-        employee.email?.toLowerCase().includes(query) ||
-        employee.mobile?.includes(query) ||
-        employee.country?.toLowerCase().includes(query) ||
-        employee.id?.toString().includes(query)
-      );
-    }) || [];
 
   const [searchedEmployeeId, setSearchedEmployeeId] = useState<string | null>(
     null,
@@ -61,7 +47,8 @@ export default function EmployeeContainer() {
   const searchedEmployee = searchedEmployeeId
     ? employees?.find((employee) => employee.id === searchedEmployeeId)
     : null;
-  const tableData = searchedEmployee ? [searchedEmployee] : filteredEmployees;
+  
+  const tableData = searchedEmployee ? [searchedEmployee] : employees || [];
 
   const handleEdit = (employee: Employee) => {
     setEditingEmployee(employee);
@@ -75,11 +62,12 @@ export default function EmployeeContainer() {
     if (!employeeToDelete?.id) return;
 
     try {
-      await deleteEmployee(employeeToDelete.id).unwrap();
-
+      
       if (employeeToDelete.id === searchedEmployeeId) {
         setSearchedEmployeeId(null);
       }
+      await deleteEmployee(employeeToDelete.id).unwrap();
+
       message.success("Employee deleted successfully");
 
       setDeleteOpen(false);
@@ -116,7 +104,6 @@ export default function EmployeeContainer() {
           transition={{ delay: 0.2 }}
           className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between"
         >
-          {/* <EmployeeSearch value={searchTerm} onChange={setSearchTerm} /> */}
           <EmployeeIdSearch
             onEmployeeFound={(employee) => setSearchedEmployeeId(employee.id!)}
             onClear={() => setSearchedEmployeeId(null)}
@@ -156,15 +143,6 @@ export default function EmployeeContainer() {
           transition={{ delay: 0.3 }}
           className="max-h-screen overflow-y-auto  flex flex-col rounded-2xl bg-white p-4 shadow-sm"
         >
-          {/* {searchTerm.trim() !== "" && filteredEmployees.length === 0 && (
-            <Alert
-              type="warning"
-              showIcon
-              message="No employees found"
-              description={`No employee matches "${searchTerm}"`}
-              className="mb-4"
-            />
-          )} */}
           {!employees?.length ? (
             <EmptyState />
           ) : (
