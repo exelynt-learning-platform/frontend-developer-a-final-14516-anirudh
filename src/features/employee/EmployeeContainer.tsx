@@ -17,7 +17,7 @@ import AppLoader from "../../components/AppLoader";
 import AppError from "../../components/AppError";
 import EmptyState from "../../components/EmptyState";
 import { useGetCountriesQuery } from "../../services/countryApi";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import EmployeeForm from "./components/EmployeeForm";
 import type { Employee } from "../../types/employee";
 import DeleteConfirm from "./components/DeleteConfirm";
@@ -44,10 +44,15 @@ export default function EmployeeContainer() {
   const [searchedEmployeeId, setSearchedEmployeeId] = useState<string | null>(
     null,
   );
-  const searchedEmployee = searchedEmployeeId
-    ? employees?.find((employee) => employee.id === searchedEmployeeId)
-    : null;
   
+  const searchedEmployee = useMemo(() => {
+    if (!searchedEmployeeId) return null;
+
+    return (
+      employees?.find((employee) => employee.id === searchedEmployeeId) || null
+    );
+  }, [employees, searchedEmployeeId]);
+
   const tableData = searchedEmployee ? [searchedEmployee] : employees || [];
 
   const handleEdit = (employee: Employee) => {
@@ -62,7 +67,6 @@ export default function EmployeeContainer() {
     if (!employeeToDelete?.id) return;
 
     try {
-      
       if (employeeToDelete.id === searchedEmployeeId) {
         setSearchedEmployeeId(null);
       }

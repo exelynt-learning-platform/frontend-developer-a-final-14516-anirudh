@@ -115,16 +115,14 @@ export default function EmployeeForm({
               message: "Name is required",
             },
             {
-              whitespace : true,
-              message: "Name is required",
-            },
-            {
-              min: 3,
-              message: "Minimum 3 characters",
-            },
-            {
-              max: 50,
-              message: "Maximum 50 characters",
+              validator(_, value) {
+                if (!value || value.trim().length > 0) {
+                  return Promise.resolve();
+                }
+                return Promise.reject(
+                  new Error("Name cannot contain only spaces"),
+                );
+              },
             },
           ]}
         >
