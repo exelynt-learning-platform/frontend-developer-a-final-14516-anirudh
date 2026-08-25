@@ -1,0 +1,208 @@
+import { motion } from "framer-motion";
+import { Button, message, Segmented, Typography } from "antd";
+import {
+  AppstoreOutlined,
+  PlusOutlined,
+  UnorderedListOutlined,
+} from "@ant-design/icons";
+
+import EmployeeTable from "./components/EmployeeTable";
+
+import {
+  useDeleteEmployeeMutation,
+  useGetEmployeesQuery,
+} from "../../services/employeeApi";
+
+import AppLoader from "../../components/AppLoader";
+import AppError from "../../components/AppError";
+import EmptyState from "../../components/EmptyState";
+import { useGetCountriesQuery } from "../../services/countryApi";
+import { useState } from "react";
+import EmployeeForm from "./components/EmployeeForm";
+import type { Employee } from "../../types/employee";
+import DeleteConfirm from "./components/DeleteConfirm";
+import EmployeeIdSearch from "./components/EmployeeIdSearch";
+import EmployeeGrid from "./components/EmployeeGrid";
+
+const { Title, Text } = Typography;
+
+export default function EmployeeContainer() {
+  const { data: employees, isLoading, error } = useGetEmployeesQuery();
+  const [deleteEmployee, { isLoading: isDeleting }] =
+    useDeleteEmployeeMutation();
+  const { data: countries = [] } = useGetCountriesQuery();
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
+
+  const [employeeToDelete, setEmployeeToDelete] = useState<Employee | null>(
+    null,
+  );
+  const [viewMode, setViewMode] = useState<"table" | "grid">("table");
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  // const [searchTerm, setSearchTerm] = useState(""); // this is for predictive search, not the employee id search
+  const filteredEmployees =
+    employees?.filter((employee) => {
+      // const query = searchTerm.toLowerCase();
+      const query = ""; // this is for predictive search, not the employee id search
+
+      return (
+        employee.name?.toLowerCase().includes(query) ||
+        employee.email?.toLowerCase().includes(query) ||
+        employee.mobile?.includes(query) ||
+        employee.country?.toLowerCase().includes(query) ||
+        employee.id?.toString().includes(query)
+      );
+    }) || [];
+
+  const [searchedEmployeeId, setSearchedEmployeeId] = useState<string | null>(
+    null,
+  );
+  const searchedEmployee = searchedEmployeeId
+    ? employees?.find((employee) => employee.id === searchedEmployeeId)
+    : null;
+  const tableData = searchedEmployee ? [searchedEmployee] : filteredEmployees;
+
+  const handleEdit = (employee: Employee) => {
+    setEditingEmployee(employee);
+    setDrawerOpen(true);
+  };
+  const handleDelete = (employee: Employee) => {
+    setEmployeeToDelete(employee);
+    setDeleteOpen(true);
+  };
+  const handleConfirmDelete = async () => {
+    if (!employeeToDelete?.id) return;
+
+    try {
+      await deleteEmployee(employeeToDelete.id).unwrap();
+
+      if (employeeToDelete.id === searchedEmployeeId) {
+        setSearchedEmployeeId(null);
+      }
+      message.success("Employee deleted successfully");
+
+      setDeleteOpen(false);
+      setEmployeeToDelete(null);
+    } catch {
+      message.error("Failed to delete employee");
+    }
+  };
+  if (isLoading) return <AppLoader />;
+
+  if (error) return <AppError />;
+
+  return (
+    <div className="min-h-screen max-h-screen bg-slate-50">
+      <div className="max-h-screen overflow-y-auto flex flex-col mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <motion.div
+          initial={{ opacity: 0, y: -15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="mb-8"
+        >
+          <Title level={2} className="mb-1!">
+            Employee Management
+          </Title>
+
+          <Text type="secondary">
+            Manage employees, search records and maintain employee information.
+          </Text>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between"
+        >
+          {/* <EmployeeSearch value={searchTerm} onChange={setSearchTerm} /> */}
+          <EmployeeIdSearch
+            onEmployeeFound={(employee) => setSearchedEmployeeId(employee.id!)}
+            onClear={() => setSearchedEmployeeId(null)}
+          />
+          <div className="flex justify-end gap-2">
+            <Segmented
+              value={viewMode}
+              onChange={(value) => setViewMode(value as "table" | "grid")}
+              options={[
+                {
+                  value: "table",
+                  icon: <UnorderedListOutlined />,
+                },
+                {
+                  value: "grid",
+                  icon: <AppstoreOutlined />,
+                },
+              ]}
+            />
+            <Button
+              size="large"
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={() => {
+                setEditingEmployee(null);
+                setDrawerOpen(true);
+              }}
+            >
+              Add Employee
+            </Button>
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="max-h-screen overflow-y-auto  flex flex-col rounded-2xl bg-white p-4 shadow-sm"
+        >
+          {/* {searchTerm.trim() !== "" && filteredEmployees.length === 0 && (
+            <Alert
+              type="warning"
+              showIcon
+              message="No employees found"
+              description={`No employee matches "${searchTerm}"`}
+              className="mb-4"
+            />
+          )} */}
+          {!employees?.length ? (
+            <EmptyState />
+          ) : (
+            <>
+              {viewMode === "table" ? (
+                <EmployeeTable
+                  data={tableData}
+                  loading={isLoading}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                />
+              ) : (
+                <EmployeeGrid
+                  data={tableData}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                />
+              )}
+            </>
+          )}
+        </motion.div>
+      </div>
+      <EmployeeForm
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        employee={editingEmployee}
+        countries={countries}
+      />
+      <DeleteConfirm
+        open={deleteOpen}
+        loading={isDeleting}
+        employee={employeeToDelete}
+        onCancel={() => {
+          setDeleteOpen(false);
+          setEmployeeToDelete(null);
+        }}
+        onConfirm={handleConfirmDelete}
+      />
+    </div>
+  );
+}
