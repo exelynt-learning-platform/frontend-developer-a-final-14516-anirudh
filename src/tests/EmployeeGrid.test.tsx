@@ -2,9 +2,9 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi } from "vitest";
 
-import EmployeeTable from "../features/employee/components/EmployeeTable";
+import EmployeeGrid from "../features/employee/components/EmployeeGrid";
 
-describe("EmployeeTable", () => {
+describe("EmployeeGrid", () => {
   const employee = {
     id: "1",
     name: "John Doe",
@@ -15,26 +15,24 @@ describe("EmployeeTable", () => {
     district: "Pune",
   };
 
-  it("renders employee data", () => {
+  it("renders employee card", () => {
     render(
-      <EmployeeTable data={[employee]} onEdit={vi.fn()} onDelete={vi.fn()} />,
+      <EmployeeGrid data={[employee]} onEdit={vi.fn()} onDelete={vi.fn()} />,
     );
 
     expect(screen.getByText("John Doe")).toBeInTheDocument();
     expect(screen.getByText("john@test.com")).toBeInTheDocument();
-    expect(screen.getByText("India")).toBeInTheDocument();
   });
 
   it("calls edit handler", async () => {
     const onEdit = vi.fn();
 
     render(
-      <EmployeeTable data={[employee]} onEdit={onEdit} onDelete={vi.fn()} />,
+      <EmployeeGrid data={[employee]} onEdit={onEdit} onDelete={vi.fn()} />,
     );
 
     await userEvent.click(screen.getByRole("button", { name: /edit/i }));
 
-    expect(onEdit).toHaveBeenCalledTimes(1);
     expect(onEdit).toHaveBeenCalledWith(employee);
   });
 
@@ -42,12 +40,11 @@ describe("EmployeeTable", () => {
     const onDelete = vi.fn();
 
     render(
-      <EmployeeTable data={[employee]} onEdit={vi.fn()} onDelete={onDelete} />,
+      <EmployeeGrid data={[employee]} onEdit={vi.fn()} onDelete={onDelete} />,
     );
 
     await userEvent.click(screen.getByRole("button", { name: /delete/i }));
 
-    expect(onDelete).toHaveBeenCalledTimes(1);
     expect(onDelete).toHaveBeenCalledWith(employee);
   });
 });

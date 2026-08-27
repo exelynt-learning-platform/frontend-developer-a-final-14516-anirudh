@@ -23,7 +23,7 @@ export default function EmployeeIdSearch({ onEmployeeFound, onClear }: EmployeeI
 
       onEmployeeFound(employee);
     } catch {
-      message.warning("Employee not found");
+      message.error("Employee not found");
     }
   };
   const handleClear = () => {

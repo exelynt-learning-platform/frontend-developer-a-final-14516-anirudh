@@ -1,4 +1,4 @@
-import { Card, Button, Tag } from "antd";
+import { Card, Button, Tag, Spin } from "antd";
 import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
 
 import type { Employee } from "../../../types/employee";
@@ -7,13 +7,22 @@ interface EmployeeGridProps {
   data: Employee[];
   onEdit: (employee: Employee) => void;
   onDelete: (employee: Employee) => void;
+  loading?: boolean;
 }
 
 export default function EmployeeGrid({
   data,
   onEdit,
   onDelete,
+  loading,
 }: EmployeeGridProps) {
+  if (loading) {
+    return (
+      <div className="flex justify-center py-10">
+        <Spin size="large" />
+      </div>
+    );
+  }
   return (
     <div
       className="

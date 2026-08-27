@@ -44,7 +44,7 @@ export default function EmployeeContainer() {
   const [searchedEmployeeId, setSearchedEmployeeId] = useState<string | null>(
     null,
   );
-  
+
   const searchedEmployee = useMemo(() => {
     if (!searchedEmployeeId) return null;
 
@@ -52,8 +52,12 @@ export default function EmployeeContainer() {
       employees?.find((employee) => employee.id === searchedEmployeeId) || null
     );
   }, [employees, searchedEmployeeId]);
-
-  const tableData = searchedEmployee ? [searchedEmployee] : employees || [];
+  const isSearchActive = searchedEmployeeId !== null;
+  const tableData = isSearchActive
+    ? searchedEmployee
+      ? [searchedEmployee]
+      : []
+    : employees || [];
 
   const handleEdit = (employee: Employee) => {
     setEditingEmployee(employee);
@@ -151,7 +155,12 @@ export default function EmployeeContainer() {
             <EmptyState />
           ) : (
             <>
-              {viewMode === "table" ? (
+              {isSearchActive && !searchedEmployee ? (
+                <EmptyState
+                  title={"Employee not found"}
+                  description={`No employee found with ID ${searchedEmployeeId}`}
+                />
+              ) : viewMode === "table" ? (
                 <EmployeeTable
                   data={tableData}
                   loading={isLoading}
@@ -161,6 +170,7 @@ export default function EmployeeContainer() {
               ) : (
                 <EmployeeGrid
                   data={tableData}
+                  loading={isLoading}
                   onEdit={handleEdit}
                   onDelete={handleDelete}
                 />
